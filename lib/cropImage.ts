@@ -12,7 +12,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 const OUTPUT_WIDTH = 1200;
 const OUTPUT_HEIGHT = 900;
 
-export async function getCroppedImageBlob(imageSrc: string, crop: PixelCrop): Promise<Blob> {
+/**
+ * `padding` (0-1) shrinks the cropped image within the output canvas,
+ * centered, leaving a white margin around it.
+ */
+export async function getCroppedImageBlob(
+  imageSrc: string,
+  crop: PixelCrop,
+  padding = 0
+): Promise<Blob> {
   const image = await loadImage(imageSrc);
   const canvas = document.createElement("canvas");
   canvas.width = OUTPUT_WIDTH;
@@ -21,11 +29,14 @@ export async function getCroppedImageBlob(imageSrc: string, crop: PixelCrop): Pr
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Impossibile preparare il ritaglio dell'immagine.");
 
-  // When the image is zoomed out below its natural size, the crop area
-  // extends past its edges; fill with white so that shows as clean
-  // padding instead of black/transparent.
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
+
+  const scale = 1 - Math.min(Math.max(padding, 0), 0.9);
+  const destWidth = OUTPUT_WIDTH * scale;
+  const destHeight = OUTPUT_HEIGHT * scale;
+  const destX = (OUTPUT_WIDTH - destWidth) / 2;
+  const destY = (OUTPUT_HEIGHT - destHeight) / 2;
 
   ctx.drawImage(
     image,
@@ -33,10 +44,10 @@ export async function getCroppedImageBlob(imageSrc: string, crop: PixelCrop): Pr
     crop.y,
     crop.width,
     crop.height,
-    0,
-    0,
-    OUTPUT_WIDTH,
-    OUTPUT_HEIGHT
+    destX,
+    destY,
+    destWidth,
+    destHeight
   );
 
   return new Promise((resolve, reject) => {
