@@ -50,41 +50,41 @@ export default function ProductImageField({
     <div className="space-y-2 sm:col-span-2">
       <label className="block text-sm font-medium">Immagine</label>
 
-      {rawSrc ? (
+      {rawSrc && (
         <ImageCropper imageSrc={rawSrc} onCancel={handleCancelCrop} onConfirm={handleConfirmCrop} />
-      ) : (
-        <>
-          {displayUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={displayUrl}
-              alt=""
-              className="aspect-[4/3] w-full max-w-xs rounded-md border border-[var(--color-border)] object-cover"
-            />
-          )}
+      )}
 
-          <input
-            ref={fileInputRef}
-            name="image"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block w-full text-sm"
-          />
+      {!rawSrc && displayUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={displayUrl}
+          alt=""
+          className="aspect-[4/3] w-full max-w-xs rounded-md border border-[var(--color-border)] object-cover"
+        />
+      )}
 
-          {previewUrl && (
-            <p className="text-xs text-[var(--color-muted)]">
-              Nuova immagine pronta: verra&apos; salvata al posto di quella attuale.
-            </p>
-          )}
+      {/* Kept mounted (just hidden) while cropping so the ref used to inject
+          the cropped file via DataTransfer stays attached to the same node. */}
+      <input
+        ref={fileInputRef}
+        name="image"
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className={rawSrc ? "hidden" : "block w-full text-sm"}
+      />
 
-          {currentImageUrl && !previewUrl && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="removeImage" className="h-4 w-4" />
-              Rimuovi immagine attuale
-            </label>
-          )}
-        </>
+      {!rawSrc && previewUrl && (
+        <p className="text-xs text-[var(--color-muted)]">
+          Nuova immagine pronta: verra&apos; salvata al posto di quella attuale.
+        </p>
+      )}
+
+      {!rawSrc && currentImageUrl && !previewUrl && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="removeImage" className="h-4 w-4" />
+          Rimuovi immagine attuale
+        </label>
       )}
     </div>
   );
