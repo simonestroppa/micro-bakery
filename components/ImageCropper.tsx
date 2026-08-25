@@ -4,6 +4,9 @@ import { useState } from "react";
 import Cropper, { type Area, type Point } from "react-easy-crop";
 import { getCroppedImageBlob } from "@/lib/cropImage";
 
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+
 export default function ImageCropper({
   imageSrc,
   onCancel,
@@ -31,12 +34,16 @@ export default function ImageCropper({
 
   return (
     <div className="space-y-3 rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-black">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white">
         <Cropper
           image={imageSrc}
           crop={crop}
           zoom={zoom}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
           aspect={4 / 3}
+          objectFit="contain"
+          restrictPosition={false}
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
@@ -47,8 +54,8 @@ export default function ImageCropper({
         <span className="text-xs text-[var(--color-muted)]">Zoom</span>
         <input
           type="range"
-          min={1}
-          max={3}
+          min={MIN_ZOOM}
+          max={MAX_ZOOM}
           step={0.05}
           value={zoom}
           onChange={(event) => setZoom(Number(event.target.value))}

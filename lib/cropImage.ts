@@ -21,6 +21,12 @@ export async function getCroppedImageBlob(imageSrc: string, crop: PixelCrop): Pr
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Impossibile preparare il ritaglio dell'immagine.");
 
+  // When the image is zoomed out below its natural size, the crop area
+  // extends past its edges; fill with white so that shows as clean
+  // padding instead of black/transparent.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
+
   ctx.drawImage(
     image,
     crop.x,
