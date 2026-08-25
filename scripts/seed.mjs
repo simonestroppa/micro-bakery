@@ -26,10 +26,12 @@ async function main() {
       description text NOT NULL DEFAULT '',
       category text NOT NULL,
       price_cents integer NOT NULL,
+      image_url text,
       active boolean NOT NULL DEFAULT true,
       sort_order integer NOT NULL DEFAULT 0,
       created_at timestamp NOT NULL DEFAULT now()
     );
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url text;
   `);
 
   const { rows } = await pool.query("SELECT count(*)::int AS count FROM products");

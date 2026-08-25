@@ -10,6 +10,7 @@ type Product = {
   description: string;
   category: string;
   priceCents: number;
+  imageUrl: string | null;
 };
 
 type Props = {
@@ -108,6 +109,14 @@ export default function MenuAndCart({
                   className="flex flex-col justify-between rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
                 >
                   <div>
+                    {product.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="mb-3 h-32 w-full rounded-md object-cover"
+                      />
+                    )}
                     <h3 className="font-medium">{product.name}</h3>
                     {product.description && (
                       <p className="mt-1 text-sm text-[var(--color-muted)]">

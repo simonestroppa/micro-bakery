@@ -134,6 +134,6 @@ scripts/                 seed prodotti di esempio, generazione password admin
 
 ## Bisogno di aiuto?
 
-Se vuoi aggiungere pagamenti online, foto prodotto caricate direttamente
-dall'admin, gestione di piu' negozi, o qualsiasi altra funzione, torna pure
-in chat: possiamo costruirla insieme partendo da questa base.
+Se vuoi aggiungere pagamenti online, gestione di piu' negozi, o qualsiasi
+altra funzione, torna pure in chat: possiamo costruirla insieme partendo
+da questa base.

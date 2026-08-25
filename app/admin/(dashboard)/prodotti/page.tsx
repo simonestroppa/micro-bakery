@@ -31,18 +31,30 @@ export default async function AdminProductsPage() {
           <ul className="divide-y divide-[var(--color-border)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface)]">
             {allProducts.map((product) => (
               <li key={product.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <p className="font-medium">
-                    {product.name}{" "}
-                    {!product.active && (
-                      <span className="ml-2 rounded-full bg-[var(--color-border)] px-2 py-0.5 text-xs text-[var(--color-muted)]">
-                        nascosto
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-sm text-[var(--color-muted)]">
-                    {product.category} - {formatPrice(product.priceCents)}
-                  </p>
+                <div className="flex items-center gap-3">
+                  {product.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.imageUrl}
+                      alt=""
+                      className="h-10 w-10 rounded-md border border-[var(--color-border)] object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-md border border-dashed border-[var(--color-border)]" />
+                  )}
+                  <div>
+                    <p className="font-medium">
+                      {product.name}{" "}
+                      {!product.active && (
+                        <span className="ml-2 rounded-full bg-[var(--color-border)] px-2 py-0.5 text-xs text-[var(--color-muted)]">
+                          nascosto
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-[var(--color-muted)]">
+                      {product.category} - {formatPrice(product.priceCents)}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Link

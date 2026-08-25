@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { del, put } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -10,6 +12,8 @@ import { productFormSchema } from "@/lib/validation";
 
 export type ProductFormState = { error?: string; fieldErrors?: Record<string, string> } | undefined;
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
 function parseProductForm(formData: FormData) {
   return productFormSchema.safeParse({
     name: formData.get("name"),
@@ -18,6 +22,31 @@ function parseProductForm(formData: FormData) {
     priceCents: Math.round(Number(formData.get("price")) * 100),
     active: formData.get("active") === "on",
   });
+}
+
+class ImageUploadError extends Error {}
+
+/** Returns the uploaded image URL, or undefined if no new file was submitted. */
+async function uploadProductImage(value: FormDataEntryValue | null) {
+  if (!(value instanceof File) || value.size === 0) return undefined;
+
+  if (!value.type.startsWith("image/")) {
+    throw new ImageUploadError("Il file caricato non è un'immagine valida.");
+  }
+  if (value.size > MAX_IMAGE_BYTES) {
+    throw new ImageUploadError("L'immagine è troppo grande (massimo 5MB).");
+  }
+
+  const extension = value.name.split(".").pop() || "jpg";
+  const blob = await put(`products/${randomUUID()}.${extension}`, value, {
+    access: "public",
+  });
+  return blob.url;
+}
+
+async function deleteBlobIfAny(url: string | null | undefined) {
+  if (!url) return;
+  await del(url).catch(() => {});
 }
 
 export async function createProduct(
@@ -31,8 +60,16 @@ export async function createProduct(
     return { error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   }
 
+  let imageUrl: string | undefined;
+  try {
+    imageUrl = await uploadProductImage(formData.get("image"));
+  } catch (error) {
+    if (error instanceof ImageUploadError) return { error: error.message };
+    throw error;
+  }
+
   await ensureSchema();
-  await db.insert(products).values(parsed.data);
+  await db.insert(products).values({ ...parsed.data, imageUrl: imageUrl ?? null });
   revalidatePath("/admin/prodotti");
   revalidatePath("/");
   redirect("/admin/prodotti");
@@ -50,8 +87,37 @@ export async function updateProduct(
     return { error: parsed.error.issues[0]?.message ?? "Dati non validi." };
   }
 
+  const removeImage = formData.get("removeImage") === "on";
+  let imageUrl: string | undefined;
+  try {
+    imageUrl = await uploadProductImage(formData.get("image"));
+  } catch (error) {
+    if (error instanceof ImageUploadError) return { error: error.message };
+    throw error;
+  }
+
   await ensureSchema();
-  await db.update(products).set(parsed.data).where(eq(products.id, id));
+
+  if (imageUrl !== undefined || removeImage) {
+    const [existing] = await db
+      .select({ imageUrl: products.imageUrl })
+      .from(products)
+      .where(eq(products.id, id));
+    await deleteBlobIfAny(existing?.imageUrl);
+  }
+
+  await db
+    .update(products)
+    .set({
+      ...parsed.data,
+      ...(imageUrl !== undefined
+        ? { imageUrl }
+        : removeImage
+          ? { imageUrl: null }
+          : {}),
+    })
+    .where(eq(products.id, id));
+
   revalidatePath("/admin/prodotti");
   revalidatePath("/");
   redirect("/admin/prodotti");
@@ -61,7 +127,14 @@ export async function deleteProduct(id: number) {
   if (!(await getAdminSession())) redirect("/admin/login");
 
   await ensureSchema();
+  const [existing] = await db
+    .select({ imageUrl: products.imageUrl })
+    .from(products)
+    .where(eq(products.id, id));
+
   await db.delete(products).where(eq(products.id, id));
+  await deleteBlobIfAny(existing?.imageUrl);
+
   revalidatePath("/admin/prodotti");
   revalidatePath("/");
 }

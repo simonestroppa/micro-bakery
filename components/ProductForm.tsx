@@ -9,6 +9,7 @@ type Product = {
   category: string;
   priceCents: number;
   active: boolean;
+  imageUrl: string | null;
 };
 
 export default function ProductForm({
@@ -78,6 +79,30 @@ export default function ProductForm({
           rows={2}
           defaultValue={product?.description}
           className="mt-1 w-full rounded-md border border-[var(--color-border)] px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="block text-sm font-medium">Immagine</label>
+        {product?.imageUrl && (
+          <div className="mt-2 flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={product.imageUrl}
+              alt=""
+              className="h-16 w-16 rounded-md border border-[var(--color-border)] object-cover"
+            />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="removeImage" className="h-4 w-4" />
+              Rimuovi immagine attuale
+            </label>
+          </div>
+        )}
+        <input
+          name="image"
+          type="file"
+          accept="image/*"
+          className="mt-2 w-full text-sm"
         />
       </div>
 
