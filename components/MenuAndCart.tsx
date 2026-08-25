@@ -114,7 +114,7 @@ export default function MenuAndCart({
                       <img
                         src={product.imageUrl}
                         alt={product.name}
-                        className="mb-3 h-32 w-full rounded-md object-cover"
+                        className="mb-3 aspect-[4/3] w-full rounded-md object-cover"
                       />
                     )}
                     <h3 className="font-medium">{product.name}</h3>
