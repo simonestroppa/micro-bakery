@@ -37,14 +37,12 @@ export default function ImageCropper({
   return (
     <div className="space-y-3 rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white">
+        {/* Fixed-size container so the Cropper's own fit/zoom math stays
+            correct; the padding preview is a pure visual scale on top,
+            matching how getCroppedImageBlob renders it on confirm. */}
         <div
-          className="absolute overflow-hidden rounded-md bg-black"
-          style={{
-            left: `${(padding / 2) * 100}%`,
-            top: `${(padding / 2) * 100}%`,
-            width: `${(1 - padding) * 100}%`,
-            height: `${(1 - padding) * 100}%`,
-          }}
+          className="absolute inset-0 overflow-hidden rounded-md bg-black"
+          style={{ transform: `scale(${1 - padding})` }}
         >
           <Cropper
             image={imageSrc}
