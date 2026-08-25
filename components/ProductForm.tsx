@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { ProductFormState } from "@/lib/actions/products";
+import ProductImageField from "@/components/ProductImageField";
 
 type Product = {
   name: string;
@@ -22,6 +23,7 @@ export default function ProductForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const [isCropping, setIsCropping] = useState(false);
 
   return (
     <form action={formAction} className="grid gap-3 sm:grid-cols-2">
@@ -82,29 +84,10 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="sm:col-span-2">
-        <label className="block text-sm font-medium">Immagine</label>
-        {product?.imageUrl && (
-          <div className="mt-2 flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={product.imageUrl}
-              alt=""
-              className="h-16 w-16 rounded-md border border-[var(--color-border)] object-cover"
-            />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="removeImage" className="h-4 w-4" />
-              Rimuovi immagine attuale
-            </label>
-          </div>
-        )}
-        <input
-          name="image"
-          type="file"
-          accept="image/*"
-          className="mt-2 w-full text-sm"
-        />
-      </div>
+      <ProductImageField
+        currentImageUrl={product?.imageUrl ?? null}
+        onCroppingChange={setIsCropping}
+      />
 
       {state?.error && (
         <p className="text-sm text-red-600 sm:col-span-2" role="alert">
@@ -115,7 +98,7 @@ export default function ProductForm({
       <div className="sm:col-span-2">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || isCropping}
           className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-medium text-white hover:bg-[var(--color-primary-dark)] disabled:opacity-60"
         >
           {pending ? "Salvataggio..." : submitLabel}
