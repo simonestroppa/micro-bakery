@@ -38,10 +38,17 @@ async function uploadProductImage(value: FormDataEntryValue | null) {
   }
 
   const extension = value.name.split(".").pop() || "jpg";
-  const blob = await put(`products/${randomUUID()}.${extension}`, value, {
-    access: "public",
-  });
-  return blob.url;
+  try {
+    const blob = await put(`products/${randomUUID()}.${extension}`, value, {
+      access: "public",
+    });
+    return blob.url;
+  } catch (error) {
+    console.error("Upload immagine prodotto fallito", error);
+    throw new ImageUploadError(
+      "Impossibile caricare l'immagine. Controlla che lo storage Vercel Blob sia collegato al progetto (Storage -> il tuo Blob store -> Connect)."
+    );
+  }
 }
 
 async function deleteBlobIfAny(url: string | null | undefined) {
