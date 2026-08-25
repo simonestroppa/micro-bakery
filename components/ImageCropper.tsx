@@ -36,18 +36,28 @@ export default function ImageCropper({
 
   return (
     <div className="space-y-3 rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-black">
-        <Cropper
-          image={imageSrc}
-          crop={crop}
-          zoom={zoom}
-          minZoom={MIN_ZOOM}
-          maxZoom={MAX_ZOOM}
-          aspect={4 / 3}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
-        />
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white">
+        <div
+          className="absolute overflow-hidden rounded-md bg-black"
+          style={{
+            left: `${(padding / 2) * 100}%`,
+            top: `${(padding / 2) * 100}%`,
+            width: `${(1 - padding) * 100}%`,
+            height: `${(1 - padding) * 100}%`,
+          }}
+        >
+          <Cropper
+            image={imageSrc}
+            crop={crop}
+            zoom={zoom}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
+            aspect={4 / 3}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
