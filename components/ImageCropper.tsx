@@ -1,12 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import Cropper, { type Area, type Point } from "react-easy-crop";
+import Cropper, { type Area, type MediaSize, type Point } from "react-easy-crop";
 import { getCroppedImageBlob } from "@/lib/cropImage";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const MAX_PADDING = 0.4;
+const PREVIEW_WIDTH = 240;
+const PREVIEW_HEIGHT = 180;
+
+function ResultPreview({
+  imageSrc,
+  crop,
+  mediaSize,
+  padding,
+}: {
+  imageSrc: string;
+  crop: Area;
+  mediaSize: MediaSize;
+  padding: number;
+}) {
+  const innerWidth = PREVIEW_WIDTH * (1 - padding);
+  const innerHeight = PREVIEW_HEIGHT * (1 - padding);
+  const innerLeft = (PREVIEW_WIDTH - innerWidth) / 2;
+  const innerTop = (PREVIEW_HEIGHT - innerHeight) / 2;
+
+  const scale = (PREVIEW_WIDTH / crop.width) * (1 - padding);
+  const imageWidth = mediaSize.naturalWidth * scale;
+  const imageHeight = mediaSize.naturalHeight * scale;
+  const imageLeft = innerLeft - crop.x * scale;
+  const imageTop = innerTop - crop.y * scale;
+
+  return (
+    <div
+      style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}
+      className="relative mx-auto overflow-hidden rounded-md border border-[var(--color-border)] bg-white"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imageSrc}
+        alt=""
+        style={{
+          position: "absolute",
+          left: imageLeft,
+          top: imageTop,
+          width: imageWidth,
+          height: imageHeight,
+          maxWidth: "none",
+        }}
+      />
+    </div>
+  );
+}
 
 export default function ImageCropper({
   imageSrc,
@@ -21,6 +67,7 @@ export default function ImageCropper({
   const [zoom, setZoom] = useState(1);
   const [padding, setPadding] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [mediaSize, setMediaSize] = useState<MediaSize | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function handleConfirm() {
@@ -36,26 +83,20 @@ export default function ImageCropper({
 
   return (
     <div className="space-y-3 rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-white">
-        {/* Fixed-size container so the Cropper's own fit/zoom math stays
-            correct; the padding preview is a pure visual scale on top,
-            matching how getCroppedImageBlob renders it on confirm. */}
-        <div
-          className="absolute inset-0 overflow-hidden rounded-md bg-black"
-          style={{ transform: `scale(${1 - padding})` }}
-        >
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            minZoom={MIN_ZOOM}
-            maxZoom={MAX_ZOOM}
-            aspect={4 / 3}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
-          />
-        </div>
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-black">
+        <Cropper
+          image={imageSrc}
+          crop={crop}
+          zoom={zoom}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          aspect={4 / 3}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onMediaLoaded={setMediaSize}
+          onCropAreaChange={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
+          onCropComplete={(_area, areaPixels) => setCroppedAreaPixels(areaPixels)}
+        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -83,6 +124,18 @@ export default function ImageCropper({
           className="w-full"
         />
       </div>
+
+      {croppedAreaPixels && mediaSize && (
+        <div className="space-y-1">
+          <p className="text-center text-xs text-[var(--color-muted)]">Anteprima risultato</p>
+          <ResultPreview
+            imageSrc={imageSrc}
+            crop={croppedAreaPixels}
+            mediaSize={mediaSize}
+            padding={padding}
+          />
+        </div>
+      )}
 
       <p className="text-xs text-[var(--color-muted)]">
         Trascina per centrare l&apos;immagine, usa lo zoom per ingrandirla e
