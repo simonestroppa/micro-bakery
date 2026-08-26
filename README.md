@@ -11,11 +11,14 @@ per gestire prodotti e ordini in arrivo.
 - **Pannello admin** (`/admin`): protetto da password, per gestire prodotti,
   vedere e aggiornare lo stato degli ordini, attivare/disattivare ritiro e
   consegna.
+- **Immagini prodotto**: caricamento con ritaglio/inquadratura (formato
+  4:3) direttamente dal form del pannello admin, salvate su Vercel Blob.
 - **Notifiche nuovo ordine** (opzionali): email via Resend e/o WhatsApp via
   Twilio. Se non configurate, il sito funziona comunque: vedrai gli ordini
   nel pannello admin.
-- **Database**: SQLite locale (file singolo, nessun servizio esterno da
-  pagare per iniziare).
+- **Database**: Postgres (es. [Neon](https://neon.tech), piano gratuito
+  disponibile), tramite una singola variabile `DATABASE_URL`. Le tabelle
+  vengono create/aggiornate automaticamente al primo avvio.
 
 ## 0. Metodo senza installare nulla (solo browser)
 
@@ -32,7 +35,9 @@ sezione 4 qui sotto per i dettagli sull'hosting.
 ## 1. Avvio in locale (alternativa, se hai Node.js disponibile)
 
 Serve [Node.js](https://nodejs.org) versione 20 o superiore installato sul tuo
-computer.
+computer, e un database Postgres: il modo piu' rapido e' crearne uno
+gratuito su [Neon](https://neon.tech) (bastano pochi click, poi copi la
+"Connection string" dal dashboard).
 
 ```bash
 # 1. Installa le dipendenze
@@ -44,7 +49,9 @@ node scripts/hash-password.mjs "laTuaPasswordSicura"
 
 # 3. Crea il file .env partendo dall'esempio
 cp .env.example .env
-# Apri .env e incolla il valore di ADMIN_PASSWORD_HASH ottenuto sopra
+# Apri .env e incolla:
+# - DATABASE_URL: la connection string Postgres (es. da Neon)
+# - ADMIN_PASSWORD_HASH ottenuto sopra
 # Poi genera anche una SESSION_SECRET, ad esempio con:
 openssl rand -base64 32
 # e incollala come valore di SESSION_SECRET
@@ -56,6 +63,11 @@ npm run seed
 npm run dev
 ```
 
+Il caricamento delle immagini prodotto (facoltativo in locale) richiede in
+piu' un token `BLOB_READ_WRITE_TOKEN` di [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) — vedi i
+commenti in `.env.example`. Senza questo token il sito funziona comunque,
+semplicemente non potrai caricare immagini finche' non lo imposti.
+
 Apri [http://localhost:3000](http://localhost:3000) per il sito pubblico e
 [http://localhost:3000/admin/login](http://localhost:3000/admin/login) per
 il pannello di gestione.
@@ -65,7 +77,9 @@ il pannello di gestione.
 - **Nome del negozio**: modifica `BAKERY_NAME` in `.env` e i testi
   nell'hero in `app/page.tsx`.
 - **Prodotti**: aggiungili direttamente dal pannello admin (`/admin/prodotti`),
-  non serve toccare il codice.
+  non serve toccare il codice. Puoi anche caricare una foto per ogni
+  prodotto: al momento della scelta del file si apre un editor per
+  ritagliare/inquadrare l'immagine nel formato 4:3 usato nel catalogo.
 - **Ritiro / consegna / preavviso minimo**: `/admin/impostazioni`.
 - **Colori e font**: token di design in `app/globals.css` (sezione `:root`),
   font caricati in `app/layout.tsx`.
@@ -98,24 +112,19 @@ creatori di Next.js):
    della cartella).
 3. Su Vercel scegli "Add New Project" e collega il repository GitHub.
 4. Nelle impostazioni del progetto Vercel, aggiungi le stesse variabili
-   d'ambiente che hai nel tuo `.env` locale (`ADMIN_PASSWORD_HASH`,
-   `SESSION_SECRET`, ecc.).
-5. Fai il deploy. Vercel ti dara' un indirizzo tipo
+   d'ambiente che hai nel tuo `.env` locale (`DATABASE_URL`,
+   `ADMIN_PASSWORD_HASH`, `SESSION_SECRET`, ecc.).
+5. Per le immagini prodotto: su Vercel vai in Storage -> Create -> Blob e
+   collega lo store al progetto, cosi' `BLOB_READ_WRITE_TOKEN` viene
+   impostato automaticamente.
+6. Fai il deploy. Vercel ti dara' un indirizzo tipo
    `tuo-forno.vercel.app`, a cui puoi poi collegare un dominio vero
    (es. `www.tuoforno.it`) dalle impostazioni del progetto.
 
-**Nota importante sul database**: SQLite salva i dati in un file. Su Vercel
-il filesystem non e' persistente tra un deploy e l'altro, quindi per la
-produzione ti consiglio di passare a un database SQLite "cloud" gratuito
-come [Turso](https://turso.tech) (compatibile, richiede solo di cambiare la
-connessione in `db/index.ts`) oppure un Postgres gratuito come
-[Neon](https://neon.tech) o [Supabase](https://supabase.com). Se preferisci,
-posso aiutarti a fare questo collegamento quando sei pronto/a per andare
-online: fammelo sapere.
-
-In alternativa, per un hosting con filesystem persistente "pronto all'uso"
-(dove SQLite funziona cosi' com'e' senza modifiche), puoi guardare anche
-[Railway](https://railway.app) o una piccola VPS.
+**Nota sul database**: il sito usa Postgres, quindi il database va comunque
+ospitato altrove (Vercel non fornisce Postgres incluso di default) — va
+benissimo il piano gratuito di [Neon](https://neon.tech) o
+[Supabase](https://supabase.com) usato anche in locale.
 
 ## 5. Struttura del progetto
 
@@ -126,9 +135,11 @@ app/
     login/               login pannello admin
     (dashboard)/         pagine protette: panoramica, ordini, prodotti, impostazioni
   api/                   endpoint per prodotti, ordini, impostazioni, login
-components/              componenti condivisi (carrello, card prodotto, ecc.)
-db/                      schema e connessione database (Drizzle + SQLite)
-lib/                     autenticazione, impostazioni negozio, notifiche
+components/              componenti condivisi (carrello, card prodotto,
+                         editor di ritaglio immagine, ecc.)
+db/                      schema e connessione database (Drizzle + Postgres)
+lib/                     autenticazione, impostazioni negozio, notifiche,
+                         upload immagini (Vercel Blob)
 scripts/                 seed prodotti di esempio, generazione password admin
 ```
 
